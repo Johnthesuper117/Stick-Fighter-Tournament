@@ -5,7 +5,8 @@
         "walkSpeed": 350,
         "jumpForce": -650,
         "gravity": 1200,
-        "maxHealth": 1000
+        "maxHealth": 1000,
+        "maxSuperMeter": 300
     },
     "moves": {
         "LIGHT_NEUTRAL": {
@@ -14,7 +15,8 @@
             "startup": 4, "active": 3, "recovery": 8,
             "hitStun": 20,
             "knockback": { "x": 50, "y": 0 },
-            "cancelable": true
+            "cancelable": true,
+            "superGain": 10
         },
         "LIGHT_FORWARD": {
             "animKey": "alpha_kick",
@@ -22,7 +24,26 @@
             "startup": 6, "active": 4, "recovery": 12,
             "hitStun": 25,
             "knockback": { "x": 100, "y": 0 },
-            "cancelable": true
+            "cancelable": true,
+            "superGain": 12
+        },
+        "LIGHT_DOWN": {
+            "animKey": "alpha_crouch",
+            "damage": 35,
+            "startup": 5, "active": 3, "recovery": 10,
+            "hitStun": 18,
+            "knockback": { "x": 40, "y": 0 },
+            "cancelable": true,
+            "superGain": 8
+        },
+        "LIGHT_UP": {
+            "animKey": "alpha_jump_kick",
+            "damage": 45,
+            "startup": 6, "active": 5, "recovery": 12,
+            "hitStun": 22,
+            "knockback": { "x": 60, "y": -300 },
+            "cancelable": true,
+            "superGain": 11
         },
         "HEAVY_NEUTRAL": {
             "animKey": "alpha_uppercut",
@@ -30,14 +51,62 @@
             "startup": 10, "active": 5, "recovery": 20,
             "hitStun": 40,
             "knockback": { "x": 50, "y": -500 }, 
-            "notes": "Launcher"
+            "notes": "Launcher",
+            "superGain": 20
+        },
+        "HEAVY_FORWARD": {
+            "animKey": "alpha_slash",
+            "damage": 110,
+            "startup": 12, "active": 6, "recovery": 18,
+            "hitStun": 45,
+            "knockback": { "x": 250, "y": -200 },
+            "superGain": 22
+        },
+        "HEAVY_DOWN": {
+            "animKey": "alpha_sweep",
+            "damage": 75,
+            "startup": 13, "active": 4, "recovery": 16,
+            "hitStun": 35,
+            "knockback": { "x": 180, "y": 100 },
+            "notes": "Low hit, knocks down",
+            "superGain": 18
+        },
+        "HEAVY_UP": {
+            "animKey": "alpha_jump_slam",
+            "damage": 120,
+            "startup": 14, "active": 7, "recovery": 22,
+            "hitStun": 50,
+            "knockback": { "x": 100, "y": -600 },
+            "superGain": 24
         },
         "SPECIAL_NEUTRAL": {
             "type": "projectile",
             "damage": 60,
             "startup": 12, "active": 0, "recovery": 30,
             "hitStun": 25,
-            "knockback": { "x": 200, "y": 0 }
+            "knockback": { "x": 200, "y": 0 },
+            "superGain": 15
+        },
+        "SPECIAL_QCF": {
+            "command": "QCF",
+            "type": "projectile",
+            "name": "Hadoken",
+            "damage": 80,
+            "startup": 15, "active": 0, "recovery": 25,
+            "hitStun": 30,
+            "knockback": { "x": 250, "y": 0 },
+            "superGain": 25
+        },
+        "SUPER_QCF_LIGHT": {
+            "command": "QCF",
+            "buttonReq": "light",
+            "superCost": 100,
+            "type": "super_projectile",
+            "name": "Shun Goku Satsu",
+            "damage": 200,
+            "startup": 20, "active": 5, "recovery": 30,
+            "hitStun": 60,
+            "knockback": { "x": 400, "y": -200 }
         }
     }
 }

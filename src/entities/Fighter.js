@@ -1,15 +1,20 @@
 import StickRenderer from './StickRenderer.js';
 import Projectile from './Projectile.js';
+import InputBuffer from '../managers/InputBuffer.js';
+import CommandInputManager from '../managers/CommandInputManager.js';
+
 export default class Fighter extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, dataStr, isDummy = false) {
         super(scene, x, y, ''); // Placeholder texture
-        this.renderer = new StickRenderer(scene, 0, 0, parseInt(this.data.color));
         scene.add.existing(this);
         scene.physics.add.existing(this);
 
         // Load Data
         this.data = JSON.parse(JSON.stringify(dataStr)); // Deep copy
         this.name = this.data.name;
+        
+        // Create renderer AFTER data is loaded
+        this.renderer = new StickRenderer(scene, 0, 0, parseInt(this.data.color));
         
         // Physics
         this.setDisplaySize(50, 100);
@@ -27,27 +32,16 @@ export default class Fighter extends Phaser.Physics.Arcade.Sprite {
         this.comboCounter = 0;
         this.busyTimer = 0;   // How long until we can move again
         this.stunTimer = 0;   // How long we are stunned
+        this.lastAttacker = null; // Remember who hit me
 
-        // In Fighter constructor
-        this.lastAttacker = null;
+        // Super Meter (3 levels max)
+        this.superMeter = 0;
+        this.superMeterMax = this.data.stats.maxSuperMeter || 300;
+        this.superLevel = 0; // 0, 1, 2, 3 (each level = 100 meter)
 
-        // In Fighter update(), inside the Stun Timer check:
-        if (this.stunTimer > 0) {
-            this.stunTimer -= delta;
-            if (this.stunTimer <= 0) {
-                // RECOVERY LOGIC
-                this.state = 'IDLE';
-                this.setTint(parseInt(this.data.color));
-                
-                // Tell the scene to reset the combo of whoever hit me last
-                if (this.lastAttacker) {
-                    this.scene.events.emit('fighter_recover', this.lastAttacker);
-                    this.lastAttacker = null;
-                }
-            }
-            return;
-        }
-
+        // Command Input System
+        this.inputBuffer = new InputBuffer();
+        this.commandInputManager = new CommandInputManager();
     }
 
     update(inputs, delta) {
@@ -58,7 +52,12 @@ export default class Fighter extends Phaser.Physics.Arcade.Sprite {
             if (this.stunTimer <= 0) {
                 this.state = 'IDLE';
                 this.setTint(parseInt(this.data.color)); // Reset color
-                this.comboCounter = 0; // Reset combo when escape
+                
+                // Tell the scene to reset the combo of whoever hit me last
+                if (this.lastAttacker) {
+                    this.scene.events.emit('fighter_recover', this.lastAttacker);
+                    this.lastAttacker = null;
+                }
             }
             return; // Can't move while stunned
         }
@@ -105,25 +104,94 @@ export default class Fighter extends Phaser.Physics.Arcade.Sprite {
     }
 
     handleAttacks(inputs) {
-        // Simple mapping for demonstration. 
-        // In a full version, we check "inputs.down + inputs.light" for crouching attacks.
+        const currentTime = Date.now();
         
+        // Record direction in input buffer
+        this.inputBuffer.recordInput(inputs.direction, currentTime);
+
         let moveKey = null;
 
-        if (inputs.light) moveKey = 'LIGHT_NEUTRAL';
-        if (inputs.heavy && inputs.right) moveKey = 'HEAVY_FORWARD'; // Example directional
-        // Add more logic here for Command Inputs (QCF, etc)
-
-        if (moveKey && this.data.moves[moveKey]) {
-            this.executeMove(moveKey);
+        // Check for super moves with command inputs first
+        if ((inputs.light || inputs.heavy || inputs.special) && this.superMeter >= 100) {
+            moveKey = this.checkCommandMoves(inputs, currentTime);
         }
 
-        if (inputs.special) {
-            // Check if Alpha (or read from JSON if character has projectile capability)
-            if (this.name === "Alpha") {
-                this.fireProjectile();
+        // If no command move, check for standard attacks
+        if (!moveKey) {
+            // Light attacks with directions
+            if (inputs.light) {
+                if (inputs.direction === 'right') moveKey = 'LIGHT_FORWARD';
+                else if (inputs.direction === 'down' || inputs.direction === 'down-right' || inputs.direction === 'down-left') moveKey = 'LIGHT_DOWN';
+                else if (inputs.direction === 'up' || inputs.direction === 'up-right' || inputs.direction === 'up-left') moveKey = 'LIGHT_UP';
+                else moveKey = 'LIGHT_NEUTRAL';
+            }
+            
+            // Heavy attacks with directions
+            if (inputs.heavy) {
+                if (inputs.direction === 'right') moveKey = 'HEAVY_FORWARD';
+                else if (inputs.direction === 'down' || inputs.direction === 'down-right' || inputs.direction === 'down-left') moveKey = 'HEAVY_DOWN';
+                else if (inputs.direction === 'up' || inputs.direction === 'up-right' || inputs.direction === 'up-left') moveKey = 'HEAVY_UP';
+                else moveKey = 'HEAVY_NEUTRAL';
+            }
+            
+            // Special attacks
+            if (inputs.special) {
+                // Check for special command moves
+                if (this.name === "Alpha") {
+                    // Alpha can do QCF for Hadoken
+                    if (this.inputBuffer.checkCommand(this.commandInputManager.getCommand('QCF'), currentTime)) {
+                        moveKey = 'SPECIAL_QCF';
+                        this.inputBuffer.clear();
+                    } else {
+                        moveKey = 'SPECIAL_NEUTRAL';
+                    }
+                } else if (this.name === "Beta") {
+                    // Beta can do QCB for Rising Slash
+                    if (this.inputBuffer.checkCommand(this.commandInputManager.getCommand('QCB'), currentTime)) {
+                        moveKey = 'SPECIAL_QCB';
+                        this.inputBuffer.clear();
+                    } else {
+                        moveKey = 'SPECIAL_NEUTRAL';
+                    }
+                }
             }
         }
+
+        if (moveKey && this.data.moves[moveKey]) {
+            this.executeMove(moveKey, currentTime);
+        }
+    }
+
+    checkCommandMoves(inputs, currentTime) {
+        // Check for super moves based on commands
+        const moves = this.data.moves;
+
+        for (const [moveKey, moveData] of Object.entries(moves)) {
+            // Skip non-super moves
+            if (!moveData.superCost) continue;
+
+            // Check if button matches
+            let buttonMatch = false;
+            if (moveData.buttonReq === 'light' && inputs.light) buttonMatch = true;
+            if (moveData.buttonReq === 'heavy' && inputs.heavy) buttonMatch = true;
+            if (moveData.buttonReq === 'special' && inputs.special) buttonMatch = true;
+
+            if (!buttonMatch) continue;
+
+            // Check if command matches
+            if (moveData.command) {
+                const pattern = this.commandInputManager.getCommand(moveData.command);
+                if (pattern && this.inputBuffer.checkCommand(pattern, currentTime)) {
+                    // Check if we have enough super meter
+                    if (this.superMeter >= moveData.superCost) {
+                        this.inputBuffer.clear();
+                        return moveKey;
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     fireProjectile() {
@@ -140,12 +208,23 @@ export default class Fighter extends Phaser.Physics.Arcade.Sprite {
         this.scene.projectiles.add(p);
     }
 
-    executeMove(key) {
+    executeMove(key, currentTime) {
         const move = this.data.moves[key];
 
+        // Check if this is a super move and if we have enough meter
+        if (move.superCost && this.superMeter < move.superCost) {
+            return; // Not enough meter
+        }
+
+        // Spend super meter if required
+        if (move.superCost) {
+            this.superMeter -= move.superCost;
+            this.updateSuperLevel();
+        }
+
         // Check type
-        if (move.type === 'projectile') {
-            this.fireProjectile(move); // Pass move data for custom damage
+        if (move.type === 'projectile' || move.type === 'super_projectile') {
+            this.fireProjectile(move);
             return;
         }
 
@@ -172,11 +251,25 @@ export default class Fighter extends Phaser.Physics.Arcade.Sprite {
         // For modularity, we let the FightScene handle the calculation call
         this.hp -= amount; 
         
+        // Gain super meter on taking damage
+        this.gainSuperMeter(amount * 0.5); // 50% of damage taken as meter
+        
         this.stunTimer = stunFrames * 16.6; 
         this.state = 'HITSTUN';
         
         this.setVelocityX(knockback.x * (this.facingRight ? -1 : 1));
         this.setVelocityY(knockback.y);
+    }
+
+    gainSuperMeter(amount) {
+        this.superMeter = Math.min(this.superMeter + amount, this.superMeterMax);
+        this.updateSuperLevel();
+    }
+
+    updateSuperLevel() {
+        const levelSize = this.superMeterMax / 3;
+        this.superLevel = Math.floor(this.superMeter / levelSize);
+        if (this.superLevel > 3) this.superLevel = 3;
     }
 
 }

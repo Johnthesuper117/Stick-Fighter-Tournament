@@ -5,7 +5,8 @@
         "walkSpeed": 420,
         "jumpForce": -700,
         "gravity": 1200,
-        "maxHealth": 900
+        "maxHealth": 900,
+        "maxSuperMeter": 300
     },
     "moves": {
         "LIGHT_NEUTRAL": {
@@ -14,7 +15,35 @@
             "startup": 3, "active": 2, "recovery": 5,
             "hitStun": 15,
             "knockback": { "x": 30, "y": 0 },
-            "cancelable": true
+            "cancelable": true,
+            "superGain": 10
+        },
+        "LIGHT_FORWARD": {
+            "animKey": "beta_combo",
+            "damage": 35,
+            "startup": 4, "active": 3, "recovery": 7,
+            "hitStun": 18,
+            "knockback": { "x": 70, "y": 0 },
+            "cancelable": true,
+            "superGain": 11
+        },
+        "LIGHT_DOWN": {
+            "animKey": "beta_crouch",
+            "damage": 20,
+            "startup": 3, "active": 2, "recovery": 5,
+            "hitStun": 12,
+            "knockback": { "x": 20, "y": 0 },
+            "cancelable": true,
+            "superGain": 8
+        },
+        "LIGHT_UP": {
+            "animKey": "beta_jump_kick",
+            "damage": 40,
+            "startup": 5, "active": 4, "recovery": 10,
+            "hitStun": 20,
+            "knockback": { "x": 50, "y": -300 },
+            "cancelable": true,
+            "superGain": 12
         },
         "HEAVY_NEUTRAL": {
             "animKey": "beta_slam",
@@ -22,7 +51,33 @@
             "startup": 15, "active": 4, "recovery": 20,
             "hitStun": 45,
             "knockback": { "x": 200, "y": 300 },
-            "notes": "Spike (hits downwards)"
+            "notes": "Spike (hits downwards)",
+            "superGain": 20
+        },
+        "HEAVY_FORWARD": {
+            "animKey": "beta_power",
+            "damage": 105,
+            "startup": 16, "active": 5, "recovery": 22,
+            "hitStun": 48,
+            "knockback": { "x": 280, "y": -150 },
+            "superGain": 23
+        },
+        "HEAVY_DOWN": {
+            "animKey": "beta_sweep",
+            "damage": 70,
+            "startup": 14, "active": 4, "recovery": 18,
+            "hitStun": 40,
+            "knockback": { "x": 200, "y": 50 },
+            "notes": "Low hit",
+            "superGain": 19
+        },
+        "HEAVY_UP": {
+            "animKey": "beta_anti_air",
+            "damage": 110,
+            "startup": 12, "active": 6, "recovery": 20,
+            "hitStun": 50,
+            "knockback": { "x": 80, "y": -700 },
+            "superGain": 22
         },
         "SPECIAL_NEUTRAL": {
             "type": "dash_attack",
@@ -30,7 +85,31 @@
             "startup": 8, "active": 10, "recovery": 25,
             "hitStun": 40,
             "knockback": { "x": 400, "y": -100 },
-            "velocity": { "x": 800, "y": 0 }
+            "velocity": { "x": 800, "y": 0 },
+            "superGain": 25
+        },
+        "SPECIAL_QCB": {
+            "command": "QCB",
+            "type": "dash_attack",
+            "name": "Rising Slash",
+            "damage": 120,
+            "startup": 12, "active": 8, "recovery": 20,
+            "hitStun": 35,
+            "knockback": { "x": 150, "y": -600 },
+            "velocity": { "x": 600, "y": -600 },
+            "superGain": 25
+        },
+        "SUPER_DP_HEAVY": {
+            "command": "DP",
+            "buttonReq": "heavy",
+            "superCost": 100,
+            "type": "super_dash",
+            "name": "Inferno Uppercut",
+            "damage": 250,
+            "startup": 18, "active": 12, "recovery": 25,
+            "hitStun": 70,
+            "knockback": { "x": 200, "y": -800 },
+            "velocity": { "x": 200, "y": -800 }
         }
     }
 }

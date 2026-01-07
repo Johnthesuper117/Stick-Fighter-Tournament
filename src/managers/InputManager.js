@@ -1,3 +1,5 @@
+import InputBuffer from './InputBuffer.js';
+
 export default class InputManager {
     constructor(scene) {
         this.scene = scene;
@@ -7,6 +9,11 @@ export default class InputManager {
             light: 'J', heavy: 'K', special: 'L'
         };
         this.keys = {};
+        
+        // Input buffering for command inputs
+        this.inputBuffer = new InputBuffer();
+        this.lastDirection = 'neutral';
+        this.directionPressTime = 0;
     }
 
     setupKeys() {
@@ -30,13 +37,37 @@ export default class InputManager {
         this.keys[action] = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[newKeyName]);
     }
 
-    getInputs() {
+    getInputs(currentTime = Date.now()) {
+        // Determine direction based on held keys
+        const up = this.keys.up.isDown;
+        const down = this.keys.down.isDown;
+        const left = this.keys.left.isDown;
+        const right = this.keys.right.isDown;
+
+        let direction = 'neutral';
+        if (down && left) direction = 'down-left';
+        else if (down && right) direction = 'down-right';
+        else if (up && left) direction = 'up-left';
+        else if (up && right) direction = 'up-right';
+        else if (down) direction = 'down';
+        else if (up) direction = 'up';
+        else if (left) direction = 'left';
+        else if (right) direction = 'right';
+
+        // Record direction change in input buffer
+        if (direction !== this.lastDirection) {
+            this.inputBuffer.recordInput(direction, currentTime);
+            this.lastDirection = direction;
+            this.directionPressTime = currentTime;
+        }
+
         // Return clear boolean states
         return {
-            up: this.keys.up.isDown,
-            down: this.keys.down.isDown,
-            left: this.keys.left.isDown,
-            right: this.keys.right.isDown,
+            up,
+            down,
+            left,
+            right,
+            direction,
             light: Phaser.Input.Keyboard.JustDown(this.keys.light),
             heavy: Phaser.Input.Keyboard.JustDown(this.keys.heavy),
             special: Phaser.Input.Keyboard.JustDown(this.keys.special)

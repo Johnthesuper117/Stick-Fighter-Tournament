@@ -6,8 +6,8 @@ export default class MenuScene extends Phaser.Scene {
         this.add.text(cx, 100, 'STICK FIGHTER TOURNAMENT', { fontSize: '40px', color: '#fff' }).setOrigin(0.5);
 
         // Buttons
-        this.createButton(cx, 250, 'Training Mode', () => this.scene.start('FightScene'));
-        this.createButton(cx, 350, 'Settings', () => console.log('Go to Settings Scene'));
+        this.createButton(cx, 250, 'Training Mode', () => this.scene.start('SelectScene'));
+        this.createButton(cx, 350, 'Settings', () => this.scene.start('SettingsScene'));
     }
 
     createButton(x, y, text, callback) {

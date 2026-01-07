@@ -1,4 +1,7 @@
-import FightScene from './scenes/FightScene.js';
+import MenuScene from './scene/MenuScene.js';
+import SelectScene from './scene/SelectScene.js';
+import SettingsScene from './scene/SettingsScene.js';
+import FightScene from './scene/FightScene.js';
 
 const config = {
     type: Phaser.AUTO,
@@ -9,10 +12,10 @@ const config = {
         default: 'arcade',
         arcade: {
             gravity: { y: 1000 }, // High gravity for snappy jumps
-            debug: true // Shows hitboxes (crucial for fighting games)
+            debug: false // Disable debug mode for cleaner visuals
         }
     },
-    scene: [FightScene]
+    scene: [MenuScene, SelectScene, SettingsScene, FightScene]
 };
 
 const game = new Phaser.Game(config);
