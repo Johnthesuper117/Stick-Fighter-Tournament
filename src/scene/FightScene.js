@@ -33,6 +33,10 @@ export default class FightScene extends Phaser.Scene {
         // HUD
         this.createHUD();
 
+        // Training Mode Dummy Controls
+        this.dummyMode = 'stand'; // 'stand', 'crouch', 'block', 'jump', 'random'
+        this.setupDummyControls();
+
         this.projectiles = this.physics.add.group();
 
         this.physics.add.overlap(this.projectiles, this.p2, (projectile, enemy) => {
@@ -44,9 +48,18 @@ export default class FightScene extends Phaser.Scene {
         
         this.comboManager = new ComboManager(this);
 
+        // Combo event listeners
         this.events.on('fighter_recover', (attacker) => {
             this.comboManager.resetCombo(attacker);
         });
+
+        // Combo visual effects
+        this.events.on('combo_milestone', (data) => {
+            this.playComboMilestoneEffect(data.count, data.fighter);
+        });
+
+        // For combo counter animation
+        this.comboCounterScale = 1.0;
     }
 
     createHUD() {
@@ -74,8 +87,12 @@ export default class FightScene extends Phaser.Scene {
             // Combo Counter
             comboText: this.add.text(400, 10, 'Combo: 0', { fontSize: '32px', color: '#fff' }).setOrigin(0.5),
             
-            // Debug text for input buffer
-            debugText: this.add.text(400, 150, '', { fontSize: '12px', color: '#aaa' }).setOrigin(0.5)
+            // Debug text for input buffer and dummy controls
+            debugText: this.add.text(400, 150, '', { fontSize: '12px', color: '#aaa' }).setOrigin(0.5),
+            
+            // Training Mode Instructions
+            trainingText: this.add.text(400, 580, 'Press D to cycle Dummy Mode | R to reset Dummy HP', 
+                { fontSize: '14px', color: '#888' }).setOrigin(0.5)
         };
     }
 
@@ -91,11 +108,52 @@ export default class FightScene extends Phaser.Scene {
         const cmds = this.inputs.getInputs(time);
         this.p1.update(cmds, delta);
         
-        // Update Dummy (physics only)
-        this.p2.update({}, delta);
+        // Update Dummy with AI behavior based on mode
+        const dummyCommands = this.getDummyCommands();
+        this.p2.update(dummyCommands, delta);
 
         // Update HUD
         this.updateHUD();
+    }
+
+    getDummyCommands() {
+        // Dummy AI based on mode
+        const cmds = {};
+
+        switch (this.dummyMode) {
+            case 'stand':
+                // Just stand there
+                return {};
+
+            case 'crouch':
+                // Crouch down
+                cmds.down = true;
+                return cmds;
+
+            case 'block':
+                // Hold back (move away from attacker)
+                cmds.left = true;
+                return cmds;
+
+            case 'jump':
+                // Periodically jump
+                if (Math.random() < 0.02) {
+                    cmds.jump = true;
+                }
+                return cmds;
+
+            case 'random':
+                // Random movement and attacks
+                const rand = Math.random();
+                if (rand < 0.05) cmds.jump = true;
+                else if (rand < 0.1) cmds.left = true;
+                else if (rand < 0.15) cmds.right = true;
+                else if (rand < 0.25) cmds.light = true;
+                return cmds;
+
+            default:
+                return {};
+        }
     }
 
     updateHUD() {
@@ -117,13 +175,40 @@ export default class FightScene extends Phaser.Scene {
         this.hud.p1SuperLevelText.setText(`Level: ${this.p1.superLevel}`);
         this.hud.p2SuperLevelText.setText(`Level: ${this.p2.superLevel}`);
 
-        // Update combo counter
+        // Update combo counter with animation
         const comboData = this.comboManager.combos.get(this.p1);
         const comboCount = comboData ? comboData.count : 0;
-        this.hud.comboText.setText(`Combo: ${comboCount}`);
+        
+        let comboText = `Combo: ${comboCount}`;
+        if (comboData && comboData.isAirCombo) {
+            comboText += ' (AIR!)';
+        }
+        this.hud.comboText.setText(comboText);
+
+        // Combo counter pulse effect
+        if (comboCount > 0) {
+            this.comboCounterScale = 1.1; // Pulse on new hit
+            this.time.delayedCall(50, () => {
+                this.comboCounterScale = 1.0;
+            });
+        }
+        this.hud.comboText.setScale(this.comboCounterScale);
 
         // Debug text (show recent inputs)
-        this.hud.debugText.setText(`Inputs: ${this.p1.inputBuffer.getLastInputs(6)}`);
+        this.hud.debugText.setText(`Inputs: ${this.p1.inputBuffer.getLastInputs(6)}\nDummy: ${this.dummyMode}`);
+    }
+
+    setupDummyControls() {
+        // Keyboard controls for dummy behavior
+        this.input.keyboard.on('keydown-D', () => this.cycleDummyMode());
+        this.input.keyboard.on('keydown-R', () => this.p2.hp = this.p2.data.stats.maxHealth); // Reset dummy HP
+    }
+
+    cycleDummyMode() {
+        const modes = ['stand', 'crouch', 'block', 'jump', 'random'];
+        const currentIndex = modes.indexOf(this.dummyMode);
+        this.dummyMode = modes[(currentIndex + 1) % modes.length];
+        console.log(`Dummy Mode: ${this.dummyMode}`);
     }
 
     createHitbox(attacker, move) {
@@ -167,5 +252,48 @@ export default class FightScene extends Phaser.Scene {
         this.cameras.main.shake(50, 0.005);
         this.time.timeScale = 0.1;
         this.time.delayedCall(50, () => { this.time.timeScale = 1; });
+
+        // 6. Show damage number above victim
+        this.showDamageNumber(victim, finalDamage);
+    }
+
+    showDamageNumber(fighter, damage) {
+        const damageText = this.add.text(fighter.x, fighter.y - 50, `-${damage}`, {
+            fontSize: '24px',
+            color: '#ff0000',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        // Floating up and fade out
+        this.tweens.add({
+            targets: damageText,
+            y: damageText.y - 50,
+            alpha: 0,
+            duration: 800,
+            ease: 'Cubic.easeOut',
+            onComplete: () => damageText.destroy()
+        });
+    }
+
+    playComboMilestoneEffect(count, fighter) {
+        // Visual effect at combo milestones (3, 5, 10, 15, 20 hits)
+        const x = fighter === this.p1 ? 200 : 600;
+        const y = 100;
+
+        const milestoneText = this.add.text(x, y, `${count}-HIT COMBO!`, {
+            fontSize: '28px',
+            color: '#ffff00',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        // Scale and fade out effect
+        this.tweens.add({
+            targets: milestoneText,
+            scale: 1.5,
+            alpha: 0,
+            duration: 1200,
+            ease: 'Quad.easeOut',
+            onComplete: () => milestoneText.destroy()
+        });
     }
 }

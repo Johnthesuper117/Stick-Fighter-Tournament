@@ -89,6 +89,61 @@ Inputs: down -> down-right -> right
 
 ---
 
+## Training Mode (NEW!)
+
+Training Mode lets you practice combos and moves against a customizable dummy opponent. Control the dummy's behavior to practice specific scenarios.
+
+### Dummy Control Keys
+
+**Press D**: Cycle through dummy behavior modes
+- **stand** (default): Dummy stands idle
+- **crouch**: Dummy crouches (for practicing low attacks)
+- **block**: Dummy holds back (passive defense)
+- **jump**: Dummy jumps randomly (moving target practice)
+- **random**: Dummy attacks and moves randomly (realistic fight practice)
+
+**Press R**: Reset dummy's HP to maximum
+- Instantly restore dummy to full health
+- Allows you to restart combo practice without winning
+- Useful for repeated drills
+
+### Training Mode UI
+
+- **Debug Display** (bottom center): Shows current dummy mode
+  - Useful for verifying which mode is active
+  - Also displays recent input buffer
+
+- **Instructions** (bottom of screen): Reminds you of control keys
+  - "Press D to cycle Dummy Mode | R to reset Dummy HP"
+
+### Training Mode Suggested Practice Routines
+
+**1. Basic Damage Output (Stand Mode)**
+- Set dummy to **stand**
+- Execute your longest combo
+- Watch damage output and meter gain
+- Reset with R and try again
+
+**2. Footwork & Movement (Block Mode)**
+- Set dummy to **block**
+- Practice movement around dummy
+- Learn spacing and approach angles
+- Practice landing attacks while moving
+
+**3. Anti-Air Practice (Jump Mode)**
+- Set dummy to **jump**
+- Practice anti-air attacks (up attacks)
+- Learn to read jump angles
+- Practice defense against air attacks
+
+**4. Combo Confirmation (Random Mode)**
+- Set dummy to **random**
+- Practice confirming which combos work
+- Learn scramble situations
+- Test combo damage in realistic scenarios
+
+---
+
 ## Alpha - The Balanced All-Rounder
 
 **Character Specialties**:
@@ -337,6 +392,27 @@ The combo counter resets when:
 - You get hit by the opponent
 - Too much time passes between hits
 
+### Modern Combo System Features (NEW!)
+
+The combo system now features fluid, responsive mechanics like modern fighting games:
+
+**Visual Feedback**:
+- **Damage Numbers**: Floating numbers above opponent showing each hit's damage
+- **Combo Counter Pulse**: Counter scales up momentarily on each new hit for tactile feedback
+- **Combo Milestones**: Screen shake and text notifications at 3, 5, 10, 15, 20+ hit combos
+- **Air Combo Indicator**: Combos mark as **(AIR!)** when both fighters are airborne
+- **Quality Ratings**: 
+  - 1-4 hits: Normal
+  - 5-9 hits: Great Combo!
+  - 10-14 hits: Awesome Combo!
+  - 15+ hits: Legendary Combo!
+
+**Responsive Mechanics**:
+- Hitstop (freeze frame) on impact for weighty feel
+- Screen shake intensity increases with combo length
+- Smooth color tints during special effects
+- Recovery animations transition smoothly into neutral states
+
 ### Ending Combos
 
 The combo display shows current hit count:
@@ -344,6 +420,14 @@ The combo display shows current hit count:
 - **Combo: 5** = 5 consecutive hits landed
 - **Combo: 15** = Extended combo (good execution)
 - **Combo: 25+** = Impressive combo (excellent execution)
+
+### Air Combo System
+
+When both fighters are airborne during a combo:
+- Combo is marked as "AIR COMBO"
+- Special visual indicator displays on screen
+- Enables extended hit chains with proper timing
+- Strategic use: Use launcher attacks to start air combos
 
 ### Combo Tips
 

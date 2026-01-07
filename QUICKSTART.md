@@ -16,6 +16,19 @@ Open your browser to `http://localhost:8000`
 - **L**: Special attacks
 - Press attack buttons while holding directions for different moves
 
+## Training Mode (New!)
+
+Once in the fight, use these keys to practice:
+
+- **Press D**: Cycle through dummy opponent behavior
+  - **stand** (default) - dummy stands still
+  - **crouch** - dummy crouches
+  - **block** - dummy holds block
+  - **jump** - dummy jumps randomly
+  - **random** - dummy moves and attacks unpredictably
+
+- **Press R**: Reset dummy HP to full (start fresh combos)
+
 ## First Combo (30 seconds)
 
 Try this basic combo:
@@ -25,6 +38,9 @@ Try this basic combo:
 3. **Press J again** → Light Kick connects
 4. **Press K** (Heavy Attack) → Heavy Uppercut launches opponent
 5. **Watch combo counter** increase in the middle of the screen!
+   - Color changes to gold/yellow for milestones (3+ hits)
+   - Air combos are marked with **(AIR!)** indicator
+   - Damage numbers float above opponent showing hit amounts
 
 ## Meter Building (1 minute)
 
@@ -46,9 +62,7 @@ Once you have 1 level of super meter:
 - Press **S** (down) → Release
 - Press **S + D** (down-right) → Release  
 - Press **D** (right) → Release
-- Press **J** (light attack) before hitstun ends
-
-## Fight Tips
+- Press **J** (light attack) before hitstun ends## Fight Tips
 
 ### Build Momentum
 - Start with Light attacks (jabs and kicks)
