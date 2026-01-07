@@ -1,32 +1,36 @@
 {
     "name": "Beta",
-    "color": "0x00ccff",
+    "color": "0xff3333",
     "stats": {
-        "walkSpeed": 400,
+        "walkSpeed": 420,
         "jumpForce": -700,
-        "gravity": 1500,
-        "maxHealth": 1000
+        "gravity": 1200,
+        "maxHealth": 900
     },
     "moves": {
         "LIGHT_NEUTRAL": {
-            "animKey": "beta",
-            "damage": 50,
-            "startup": 5,
-            "active": 4,
-            "recovery": 10,
-            "hitStun": 20,
-            "knockback": { "x": 100, "y": 0 },
+            "animKey": "beta_jab",
+            "damage": 25,
+            "startup": 3, "active": 2, "recovery": 5,
+            "hitStun": 15,
+            "knockback": { "x": 30, "y": 0 },
             "cancelable": true
         },
-        "HEAVY_FORWARD": {
-            "animKey": "beta",
-            "damage": 120,
-            "startup": 15,
-            "active": 6,
-            "recovery": 25,
+        "HEAVY_NEUTRAL": {
+            "animKey": "beta_slam",
+            "damage": 80,
+            "startup": 15, "active": 4, "recovery": 20,
+            "hitStun": 45,
+            "knockback": { "x": 200, "y": 300 },
+            "notes": "Spike (hits downwards)"
+        },
+        "SPECIAL_NEUTRAL": {
+            "type": "dash_attack",
+            "damage": 100,
+            "startup": 8, "active": 10, "recovery": 25,
             "hitStun": 40,
-            "knockback": { "x": 400, "y": -400 }, 
-            "cancelable": false
+            "knockback": { "x": 400, "y": -100 },
+            "velocity": { "x": 800, "y": 0 }
         }
     }
 }

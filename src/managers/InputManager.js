@@ -10,10 +10,16 @@ export default class InputManager {
     }
 
     setupKeys() {
-        // Convert string names to Phaser Key objects
         Object.keys(this.keyMap).forEach(action => {
-            const keyName = this.keyMap[action];
-            this.keys[action] = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[keyName]);
+            // Check if user has a custom bind
+            const savedKey = localStorage.getItem('key_' + action);
+            const keyName = savedKey ? savedKey : this.keyMap[action]; // Fallback to default
+            
+            // Phaser key codes lookup can be tricky with raw strings.
+            // We might need a mapper, but usually Phaser.Input.Keyboard.KeyCodes[keyName] works for A-Z.
+            if (Phaser.Input.Keyboard.KeyCodes[keyName]) {
+                this.keys[action] = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[keyName]);
+            }
         });
     }
 

@@ -1,5 +1,6 @@
 import Fighter from '../entities/Fighter.js';
 import InputManager from '../managers/InputManager.js';
+import ComboManager from '../managers/ComboManager.js';
 
 // We import JSONs directly (using a bundler) or load them via Phaser Loader.
 // For this simple setup, let's assume we load them in Preload.
@@ -32,6 +33,24 @@ export default class FightScene extends Phaser.Scene {
 
         // HUD
         this.comboText = this.add.text(10, 10, 'Combo: 0', { fontSize: '32px', color: '#fff' });
+
+        this.projectiles = this.physics.add.group();
+
+        this.physics.add.overlap(this.projectiles, this.p2, (projectile, enemy) => {
+        if (projectile.owner !== enemy) {
+            enemy.takeDamage(projectile.damage, 20, {x: 100, y: -100});
+            projectile.destroy();
+            // Add particle explosion effect here later
+        }
+    
+    });
+    
+    this.comboManager = new ComboManager(this);
+
+    this.events.on('fighter_recover', (attacker) => {
+        this.comboManager.resetCombo(attacker);
+    });
+
     }
 
     createEnvironment() {
@@ -67,22 +86,25 @@ export default class FightScene extends Phaser.Scene {
     }
 
     handleHit(attacker, victim, move) {
-        // Calculate Hit
-        victim.takeDamage(move.damage, move.hitStun, move.knockback);
-        
-        // Combo Logic
-        attacker.comboCounter++;
-        this.comboText.setText(`Combo: ${attacker.comboCounter}`);
+    // 1. Calculate Scaled Damage
+    const finalDamage = this.comboManager.registerHit(attacker, victim, move.damage);
 
-        // Alpha's Special Trait: Heal after 5 hits
-        if (attacker.name === "Alpha" && attacker.comboCounter > 5) {
-            attacker.hp = Math.min(attacker.hp + 5, attacker.data.stats.maxHealth);
-            console.log("Alpha Healing!");
-        }
-        
-        // Hitstop (Freeze game briefly for impact)
-        this.cameras.main.shake(50, 0.01); // Camera shake
-        this.time.timeScale = 0.1; // Slow motion
-        this.time.delayedCall(50, () => { this.time.timeScale = 1; }); // Resume
+    // 2. Apply to Victim
+    victim.takeDamage(finalDamage, move.hitStun, move.knockback, attacker);
+
+    // 3. Alpha's Passive (Heal on 5+ hits)
+    // We check the internal combo count from the manager
+    const comboData = this.comboManager.combos.get(attacker);
+    if (attacker.name === "Alpha" && comboData && comboData.count >= 5) {
+        attacker.hp = Math.min(attacker.hp + 2, attacker.data.stats.maxHealth);
+        // Visual Heal Effect (Green Tint briefly)
+        attacker.setTint(0x00ff00);
+        this.time.delayedCall(100, () => attacker.setTint(parseInt(attacker.data.color)));
+    }
+
+    // 4. Hitstop & Shake
+    this.cameras.main.shake(50, 0.005);
+    this.time.timeScale = 0.1;
+    this.time.delayedCall(50, () => { this.time.timeScale = 1; });
     }
 }

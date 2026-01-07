@@ -1,32 +1,43 @@
 {
     "name": "Alpha",
-    "color": "0x00ccff",
+    "color": "0x3399ff",
     "stats": {
-        "walkSpeed": 400,
-        "jumpForce": -700,
-        "gravity": 1500,
+        "walkSpeed": 350,
+        "jumpForce": -650,
+        "gravity": 1200,
         "maxHealth": 1000
     },
     "moves": {
         "LIGHT_NEUTRAL": {
-            "animKey": "alpha_light_n",
-            "damage": 50,
-            "startup": 5,
-            "active": 4,
-            "recovery": 10,
+            "animKey": "alpha_punch",
+            "damage": 40,
+            "startup": 4, "active": 3, "recovery": 8,
             "hitStun": 20,
+            "knockback": { "x": 50, "y": 0 },
+            "cancelable": true
+        },
+        "LIGHT_FORWARD": {
+            "animKey": "alpha_kick",
+            "damage": 50,
+            "startup": 6, "active": 4, "recovery": 12,
+            "hitStun": 25,
             "knockback": { "x": 100, "y": 0 },
             "cancelable": true
         },
-        "HEAVY_FORWARD": {
-            "animKey": "alpha_heavy_f",
-            "damage": 120,
-            "startup": 15,
-            "active": 6,
-            "recovery": 25,
+        "HEAVY_NEUTRAL": {
+            "animKey": "alpha_uppercut",
+            "damage": 90,
+            "startup": 10, "active": 5, "recovery": 20,
             "hitStun": 40,
-            "knockback": { "x": 400, "y": -400 }, 
-            "cancelable": false
+            "knockback": { "x": 50, "y": -500 }, 
+            "notes": "Launcher"
+        },
+        "SPECIAL_NEUTRAL": {
+            "type": "projectile",
+            "damage": 60,
+            "startup": 12, "active": 0, "recovery": 30,
+            "hitStun": 25,
+            "knockback": { "x": 200, "y": 0 }
         }
     }
 }

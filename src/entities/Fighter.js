@@ -1,6 +1,9 @@
+import StickRenderer from './StickRenderer.js';
+import Projectile from './Projectile.js';
 export default class Fighter extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, dataStr, isDummy = false) {
-        super(scene, x, y, 'texture'); // Placeholder texture
+        super(scene, x, y, ''); // Placeholder texture
+        this.renderer = new StickRenderer(scene, 0, 0, parseInt(this.data.color));
         scene.add.existing(this);
         scene.physics.add.existing(this);
 
@@ -24,6 +27,27 @@ export default class Fighter extends Phaser.Physics.Arcade.Sprite {
         this.comboCounter = 0;
         this.busyTimer = 0;   // How long until we can move again
         this.stunTimer = 0;   // How long we are stunned
+
+        // In Fighter constructor
+        this.lastAttacker = null;
+
+        // In Fighter update(), inside the Stun Timer check:
+        if (this.stunTimer > 0) {
+            this.stunTimer -= delta;
+            if (this.stunTimer <= 0) {
+                // RECOVERY LOGIC
+                this.state = 'IDLE';
+                this.setTint(parseInt(this.data.color));
+                
+                // Tell the scene to reset the combo of whoever hit me last
+                if (this.lastAttacker) {
+                    this.scene.events.emit('fighter_recover', this.lastAttacker);
+                    this.lastAttacker = null;
+                }
+            }
+            return;
+        }
+
     }
 
     update(inputs, delta) {
@@ -53,6 +77,11 @@ export default class Fighter extends Phaser.Physics.Arcade.Sprite {
 
         this.handleMovement(inputs);
         this.handleAttacks(inputs);
+
+        // Sync renderer position to physics body
+        this.renderer.setPosition(this.x, this.y);
+        // Tell renderer to animate
+        this.renderer.update(this.state, this.body.velocity);
     }
 
     handleMovement(inputs) {
@@ -88,29 +117,66 @@ export default class Fighter extends Phaser.Physics.Arcade.Sprite {
         if (moveKey && this.data.moves[moveKey]) {
             this.executeMove(moveKey);
         }
+
+        if (inputs.special) {
+            // Check if Alpha (or read from JSON if character has projectile capability)
+            if (this.name === "Alpha") {
+                this.fireProjectile();
+            }
+        }
+    }
+
+    fireProjectile() {
+        if (this.state === 'ATTACK') return;
+        
+        this.state = 'ATTACK';
+        this.busyTimer = 500; // Recovery time
+
+        // Create Projectile
+        const dir = this.facingRight ? 1 : -1;
+        const p = new Projectile(this.scene, this.x + (40 * dir), this.y, dir, this);
+        
+        // Add to a group in the scene (we need to create this group in FightScene)
+        this.scene.projectiles.add(p);
     }
 
     executeMove(key) {
         const move = this.data.moves[key];
-        
+
+        // Check type
+        if (move.type === 'projectile') {
+            this.fireProjectile(move); // Pass move data for custom damage
+            return;
+        }
+
         this.state = 'ATTACK';
-        this.busyTimer = (move.startup + move.active + move.recovery) * 16.6; // Convert frames to ms
-        
-        // Visual debug for attack
+        this.busyTimer = (move.startup + move.active + move.recovery) * 16.6;
+
+        // Handle Dash Attacks
+        if (move.velocity) {
+            // Wait for startup frames, then apply velocity
+            this.scene.time.delayedCall(move.startup * 16, () => {
+                const dir = this.facingRight ? 1 : -1;
+                this.setVelocityX(move.velocity.x * dir);
+                if (move.velocity.y) this.setVelocityY(move.velocity.y);
+            });
+        }
+
         this.scene.events.emit('attack_start', this, move);
     }
 
-    takeDamage(amount, stunFrames, knockback) {
-        this.hp -= amount;
-        this.stunTimer = stunFrames * 16.6; // Convert frames to ms
+    takeDamage(amount, stunFrames, knockback, attacker) {
+        this.lastAttacker = attacker; // Remember who hit me
+        
+        // Calculate damage via Scene (or Manager directly if passed)
+        // For modularity, we let the FightScene handle the calculation call
+        this.hp -= amount; 
+        
+        this.stunTimer = stunFrames * 16.6; 
         this.state = 'HITSTUN';
         
-        // Apply Knockback
-        this.setVelocityX(knockback.x * (this.facingRight ? -1 : 1)); // Push opposite way
+        this.setVelocityX(knockback.x * (this.facingRight ? -1 : 1));
         this.setVelocityY(knockback.y);
-
-        // Alpha's Special Ability: Heal on high combo
-        // Note: This logic usually goes on the ATTACKER, not the victim.
-        // We will implement the attacker logic in the Scene collision handler.
     }
+
 }
