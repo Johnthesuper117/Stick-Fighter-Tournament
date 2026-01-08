@@ -72,6 +72,19 @@ export default class InputBuffer {
     }
 
     /**
+     * Check if a specific input was pressed recently
+     * input: the input type (e.g., 'light', 'heavy', 'special')
+     * currentTime: current time
+     * windowMs: time window in ms
+     */
+    checkRecentInput(input, currentTime, windowMs = 100) {
+        this.cleanOldInputs(currentTime);
+        // Note: This assumes inputs are recorded with direction, but for buttons, we need to extend buffer
+        // For now, since buttons are not in buffer, return false and handle separately
+        return false; // Placeholder, will handle in Fighter
+    }
+
+    /**
      * Get the last N inputs as a string for debugging
      */
     getLastInputs(count = 5) {

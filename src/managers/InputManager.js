@@ -61,6 +61,16 @@ export default class InputManager {
             this.directionPressTime = currentTime;
         }
 
+        // Buffer attack inputs for more lenient input
+        const lightPressed = Phaser.Input.Keyboard.JustDown(this.keys.light);
+        const heavyPressed = Phaser.Input.Keyboard.JustDown(this.keys.heavy);
+        const specialPressed = Phaser.Input.Keyboard.JustDown(this.keys.special);
+
+        // Record in buffer
+        if (lightPressed) this.inputBuffer.recordInput('light', currentTime);
+        if (heavyPressed) this.inputBuffer.recordInput('heavy', currentTime);
+        if (specialPressed) this.inputBuffer.recordInput('special', currentTime);
+
         // Return clear boolean states
         return {
             up,
@@ -68,9 +78,9 @@ export default class InputManager {
             left,
             right,
             direction,
-            light: Phaser.Input.Keyboard.JustDown(this.keys.light),
-            heavy: Phaser.Input.Keyboard.JustDown(this.keys.heavy),
-            special: Phaser.Input.Keyboard.JustDown(this.keys.special)
+            light: lightPressed,
+            heavy: heavyPressed,
+            special: specialPressed
         };
     }
 }

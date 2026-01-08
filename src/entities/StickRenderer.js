@@ -26,12 +26,43 @@ export default class StickRenderer extends Phaser.GameObjects.Container {
         this.smoothingSpeed = 8.0; // per-second smoothing speed for joint interpolation
         this.positionSmoothingSpeed = 20.0; // per-second smoothing speed for container position
         this._animTime = 0;
+
+        // Animation pose map for specific moves
+        this.poseMap = {
+            // Alpha moves
+            'alpha_punch': { rightHand: { x: 30, y: -5 } },
+            'alpha_kick': { rightFoot: { x: 25, y: 30 } },
+            'alpha_crouch': { rightHand: { x: 25, y: 10 }, pelvis: { x: 0, y: 15 } },
+            'alpha_jump_kick': { rightFoot: { x: 20, y: 20 } },
+            'alpha_uppercut': { rightHand: { x: 15, y: -30 } },
+            'alpha_slash': { rightHand: { x: 35, y: -10 } },
+            'alpha_sweep': { rightFoot: { x: 30, y: 35 } },
+            'alpha_jump_slam': { rightHand: { x: 20, y: 20 } },
+            // Beta moves
+            'beta_jab': { rightHand: { x: 25, y: 0 } },
+            'beta_combo': { rightHand: { x: 28, y: -5 } },
+            'beta_crouch': { rightHand: { x: 20, y: 15 }, pelvis: { x: 0, y: 15 } },
+            'beta_jump_kick': { rightFoot: { x: 22, y: 25 } },
+            'beta_slam': { rightHand: { x: 10, y: 25 } },
+            'beta_power': { rightHand: { x: 40, y: -15 } },
+            'beta_sweep': { rightFoot: { x: 35, y: 40 } },
+            'beta_anti_air': { rightHand: { x: 18, y: -35 } },
+            // Specials
+            'hadoken': { rightHand: { x: 35, y: -10 } },
+            'rising_slash': { rightHand: { x: 30, y: -20 } },
+            'shun_goku_satsu': { rightHand: { x: 40, y: -25 } },
+            'inferno_uppercut': { rightHand: { x: 25, y: -40 } },
+        };
     }
 
     // Trigger a named pose (short sequence) that blends into the current pose
-    triggerPose(poseData, duration = 200) {
+    triggerPose(poseData, duration = 200, animKey = null) {
+        let finalPose = poseData;
+        if (animKey && this.poseMap[animKey]) {
+            finalPose = { ...poseData, ...this.poseMap[animKey] };
+        }
         this.activePose = {
-            poseData,
+            poseData: finalPose,
             duration,
             elapsed: 0,
             weight: 1.0
@@ -76,6 +107,37 @@ export default class StickRenderer extends Phaser.GameObjects.Container {
             target.head.y = -40 + breathe;
             target.leftHand.y = 0 + breathe;
             target.rightHand.y = 0 + breathe;
+        } else if (fighterState === 'CROUCH') {
+            target.head.y = -30;
+            target.neck.y = -15;
+            target.pelvis.y = 20;
+            target.leftHand.y = 10;
+            target.rightHand.y = 10;
+            target.leftFoot.y = 50;
+            target.rightFoot.y = 50;
+        } else if (fighterState === 'BLOCK') {
+            target.leftHand.x = -30;
+            target.leftHand.y = -10;
+            target.rightHand.x = 10;
+            target.rightHand.y = -5;
+        } else if (fighterState === 'JUMP') {
+            target.leftFoot.y = 30;
+            target.rightFoot.y = 30;
+            target.leftHand.y = -10;
+            target.rightHand.y = -10;
+        } else if (fighterState === 'ATTACK') {
+            // Basic attack pose
+            target.leftHand.x = -25;
+            target.leftHand.y = -15;
+            target.rightHand.x = 25;
+            target.rightHand.y = -15;
+        } else if (fighterState === 'HITSTUN') {
+            // Hitstun pose
+            target.head.x = 5;
+            target.leftHand.x = -15;
+            target.rightHand.x = 15;
+            target.leftHand.y = 5;
+            target.rightHand.y = 5;
         }
 
         // If a pose is active, blend it into the target

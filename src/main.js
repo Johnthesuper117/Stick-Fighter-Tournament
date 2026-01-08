@@ -13,6 +13,10 @@ const config = {
         width: (typeof window !== 'undefined') ? window.innerWidth : 800,
         height: (typeof window !== 'undefined') ? window.innerHeight : 600
     },
+    fps: {
+        target: 60,
+        forceSetTimeOut: true
+    },
     physics: {
         default: 'arcade',
         arcade: {

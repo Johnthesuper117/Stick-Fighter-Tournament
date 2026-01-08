@@ -431,10 +431,11 @@ export default class FightScene extends Phaser.Scene {
         }
 
         // 5. Hitstop & Shake
-        // Short freeze for both attacker and victim with camera shake
-        this.cameras.main.shake(move.hitShake || 50, 0.005 + (comboData ? Math.min(comboData.count * 0.002, 0.03) : 0));
-
         const hitstopMs = move.hitStop || 60; // default 60ms
+        // Scale shake with hitstop duration
+        const shakeIntensity = 0.005 + (hitstopMs / 1000) * 0.01; // stronger shake for longer hitstop
+        this.cameras.main.shake(hitstopMs, shakeIntensity);
+
         this.applyHitstop([attacker, victim], hitstopMs);
 
         // If this move is cancelable, allow attacker a small cancel window

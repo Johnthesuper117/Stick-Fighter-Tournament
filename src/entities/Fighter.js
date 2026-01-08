@@ -24,7 +24,7 @@ export default class Fighter extends Phaser.Physics.Arcade.Sprite {
 
         // Combat State
         this.hp = this.data.stats.maxHealth;
-        this.state = 'IDLE'; // IDLE, RUN, JUMP, ATTACK, HITSTUN
+        this.state = 'IDLE'; // IDLE, RUN, JUMP, ATTACK, HITSTUN, CROUCH, BLOCK
         this.facingRight = true;
         this.isDummy = isDummy;
 
@@ -109,7 +109,7 @@ export default class Fighter extends Phaser.Physics.Arcade.Sprite {
                 if (this.renderer) {
                     const actDur = Math.max(80, activeMs);
                     const pose = this._mirrorPoseForFacing(move.poseActive || move.pose || { rightHand: { x: 20, y: -10 }, leftHand: { x: -10, y: -8 } });
-                    this.renderer.triggerPose(pose, actDur);
+                    this.renderer.triggerPose(pose, actDur, move.animKey);
                 }
             }
 
@@ -123,7 +123,7 @@ export default class Fighter extends Phaser.Physics.Arcade.Sprite {
                 if (this.renderer) {
                     const recDur = Math.max(80, recoveryMs);
                     const pose = this._mirrorPoseForFacing(move.poseRecovery || { rightHand: { x: 6, y: -4 }, leftHand: { x: -4, y: -2 } });
-                    this.renderer.triggerPose(pose, recDur);
+                    this.renderer.triggerPose(pose, recDur, move.animKey);
                 }
             }
 
@@ -186,22 +186,42 @@ export default class Fighter extends Phaser.Physics.Arcade.Sprite {
         if (inputs.left) {
             this.setVelocityX(-targetSpeed);
             this.facingRight = false;
+            if (this.state !== 'ATTACK' && this.state !== 'CROUCH' && this.state !== 'BLOCK') this.state = 'RUN';
         } else if (inputs.right) {
             this.setVelocityX(targetSpeed);
             this.facingRight = true;
+            if (this.state !== 'ATTACK' && this.state !== 'CROUCH' && this.state !== 'BLOCK') this.state = 'RUN';
         } else {
             // If in attack and partial control, allow momentum decay instead of abrupt stop
             if (this.state === 'ATTACK') {
                 this.setVelocityX(Phaser.Math.Linear(this.body.velocity.x, 0, 0.12));
             } else {
                 this.setVelocityX(0);
+                if (this.state === 'RUN') this.state = 'IDLE';
             }
+        }
+
+        // Crouch
+        if (inputs.down && this.body.touching.down && this.state !== 'ATTACK') {
+            this.state = 'CROUCH';
+            this.setVelocityX(0); // Stop horizontal movement when crouching
+        } else if (!inputs.down && this.state === 'CROUCH') {
+            this.state = 'IDLE';
+        }
+
+        // Block (hold back)
+        const backDirection = this.facingRight ? 'left' : 'right';
+        if (inputs[backDirection] && this.state !== 'ATTACK' && this.state !== 'CROUCH') {
+            this.state = 'BLOCK';
+        } else if (!inputs[backDirection] && this.state === 'BLOCK') {
+            this.state = 'IDLE';
         }
 
         // Jump allowed only when not mid-attack unless move allows it
         if (inputs.up && this.body.touching.down) {
             if (!(this.state === 'ATTACK' && this.currentMove && !this.currentMove.allowJump)) {
                 this.setVelocityY(this.data.stats.jumpForce);
+                this.state = 'JUMP';
             }
         }
     }
@@ -214,31 +234,36 @@ export default class Fighter extends Phaser.Physics.Arcade.Sprite {
 
         let moveKey = null;
 
+        // Check for recent attack inputs in buffer (within last 100ms for leniency)
+        const recentLight = this.inputBuffer.checkRecentInput('light', currentTime, 100);
+        const recentHeavy = this.inputBuffer.checkRecentInput('heavy', currentTime, 100);
+        const recentSpecial = this.inputBuffer.checkRecentInput('special', currentTime, 100);
+
         // Check for super moves with command inputs first
-        if ((inputs.light || inputs.heavy || inputs.special) && this.superMeter >= 100) {
-            moveKey = this.checkCommandMoves(inputs, currentTime);
+        if ((recentLight || recentHeavy || recentSpecial) && this.superMeter >= 100) {
+            moveKey = this.checkCommandMoves({ light: recentLight, heavy: recentHeavy, special: recentSpecial, direction: inputs.direction }, currentTime);
         }
 
         // If no command move, check for standard attacks
         if (!moveKey) {
             // Light attacks with directions
-            if (inputs.light) {
+            if (recentLight) {
                 if (inputs.direction === 'right') moveKey = 'LIGHT_FORWARD';
                 else if (inputs.direction === 'down' || inputs.direction === 'down-right' || inputs.direction === 'down-left') moveKey = 'LIGHT_DOWN';
                 else if (inputs.direction === 'up' || inputs.direction === 'up-right' || inputs.direction === 'up-left') moveKey = 'LIGHT_UP';
                 else moveKey = 'LIGHT_NEUTRAL';
             }
-            
+
             // Heavy attacks with directions
-            if (inputs.heavy) {
+            if (recentHeavy) {
                 if (inputs.direction === 'right') moveKey = 'HEAVY_FORWARD';
                 else if (inputs.direction === 'down' || inputs.direction === 'down-right' || inputs.direction === 'down-left') moveKey = 'HEAVY_DOWN';
                 else if (inputs.direction === 'up' || inputs.direction === 'up-right' || inputs.direction === 'up-left') moveKey = 'HEAVY_UP';
                 else moveKey = 'HEAVY_NEUTRAL';
             }
-            
+
             // Special attacks
-            if (inputs.special) {
+            if (recentSpecial) {
                 // Check for special command moves
                 if (this.name === "Alpha") {
                     // Alpha can do QCF for Hadoken
@@ -365,12 +390,30 @@ export default class Fighter extends Phaser.Physics.Arcade.Sprite {
         if (this.renderer) {
             const startupDur = Math.max(80, (move.startup || 0) * 16.6);
             const pose = this._mirrorPoseForFacing(move.poseStartup || move.pose || { rightHand: { x: 12, y: -8 }, leftHand: { x: -8, y: -6 } });
-            this.renderer.triggerPose(pose, startupDur);
+            this.renderer.triggerPose(pose, startupDur, move.animKey);
         }
 
         // Check type
         if (move.type === 'projectile' || move.type === 'super_projectile') {
             this.fireProjectile(move);
+            return;
+        } else if (move.type === 'dash_attack' || move.type === 'super_dash') {
+            // Dash forward with attack
+            this.state = 'ATTACK';
+            this.currentMove = move;
+            this.moveElapsed = 0;
+            this._moveActive = false;
+            this._moveRecovery = false;
+            this._poseTriggered = null;
+
+            // Apply dash velocity
+            const dir = this.facingRight ? 1 : -1;
+            this.setVelocityX((move.velocity.x || 600) * dir);
+            if (typeof move.velocity.y === 'number') this.setVelocityY(move.velocity.y);
+
+            this.scene.events.emit('attack_start', this, move);
+
+            this.busyTimer = (move.startup + move.active + move.recovery) * 16.6;
             return;
         }
 
@@ -421,8 +464,16 @@ export default class Fighter extends Phaser.Physics.Arcade.Sprite {
         }
 
         const knockX = (kb.x || 0) * dir;
+        let knockY = kb.y || 0;
+
+        // For air combos, add upward momentum to keep airborne
+        const comboData = this.scene.comboManager.getComboData(attacker);
+        if (comboData && comboData.isAirCombo && knockY === 0) {
+            knockY = -100; // slight upward to maintain air
+        }
+
         this.setVelocityX(knockX);
-        this.setVelocityY(kb.y || 0);
+        this.setVelocityY(knockY);
     }
 
     gainSuperMeter(amount) {
