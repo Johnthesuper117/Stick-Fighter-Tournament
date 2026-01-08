@@ -88,7 +88,8 @@ export default class ComboManager {
                 if (data.count >= 15) quality = 'Legendary';
                 
                 const message = `${quality} Combo! ${data.count} hits, ${data.totalDamage} damage${data.isAirCombo ? ' (AIR COMBO!)' : ''}`;
-                console.log(message);
+                // Use debug for non-critical runtime messages
+                if (console && typeof console.debug === 'function') console.debug(message);
                 
                 this.scene.events.emit('combo_end', {
                     attacker: attacker,

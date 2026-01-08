@@ -1,12 +1,23 @@
-import alphaData from '../data/alpha.json' assert { type: "json" };
-import betaData from '../data/beta.json' assert { type: "json" };
-
 export default class SelectScene extends Phaser.Scene {
     constructor() { super('SelectScene'); }
 
-    create() {
+    async create() {
         this.add.text(400, 50, 'SELECT YOUR FIGHTER', { fontSize: '40px', color: '#fff' }).setOrigin(0.5);
         this.add.text(400, 550, '[ ESC ] to Return', { fontSize: '20px', color: '#aaa' }).setOrigin(0.5);
+
+        // Load character data at runtime to avoid import assertion compatibility issues
+        let alphaData, betaData;
+        try {
+            const [a, b] = await Promise.all([
+                fetch('/src/data/alpha.json').then(r => r.json()),
+                fetch('/src/data/beta.json').then(r => r.json())
+            ]);
+            alphaData = a; betaData = b;
+        } catch (err) {
+            console.error('Failed to load character data; using fallback', err);
+            alphaData = { name: 'Alpha', color: '0x3399ff', stats: { walkSpeed: 350, jumpForce: -650, gravity: 1200, maxHealth: 1000 }, moves: {} };
+            betaData = { name: 'Beta', color: '0xff3333', stats: { walkSpeed: 420, jumpForce: -700, gravity: 1200, maxHealth: 900 }, moves: {} };
+        }
 
         // Characters available
         this.characters = [
@@ -34,7 +45,7 @@ export default class SelectScene extends Phaser.Scene {
             bg.setStrokeStyle(3, isSelected ? 0x00ffff : 0x666666);
 
             // Character name
-            this.add.text(x, 200, char.name, {
+            const nameText = this.add.text(x, 200, char.name, {
                 fontSize: '32px',
                 color: isSelected ? '#00ffff' : '#fff'
             }).setOrigin(0.5);
@@ -54,10 +65,7 @@ export default class SelectScene extends Phaser.Scene {
 
             // Store reference for update
             char.bgElement = bg;
-            char.nameElement = this.add.text(x, 200, char.name, {
-                fontSize: '32px',
-                color: isSelected ? '#00ffff' : '#fff'
-            }).setOrigin(0.5);
+            char.nameElement = nameText;
         });
 
         // Help text

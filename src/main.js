@@ -5,9 +5,14 @@ import FightScene from './scene/FightScene.js';
 
 const config = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
     parent: 'game-container',
+    scale: {
+        // Phaser may be undefined in node import/smoke tests, so guard these references
+        mode: (typeof Phaser !== 'undefined' && Phaser.Scale && Phaser.Scale.RESIZE) ? Phaser.Scale.RESIZE : undefined,
+        autoCenter: (typeof Phaser !== 'undefined' && Phaser.Scale && Phaser.Scale.CENTER_BOTH) ? Phaser.Scale.CENTER_BOTH : undefined,
+        width: (typeof window !== 'undefined') ? window.innerWidth : 800,
+        height: (typeof window !== 'undefined') ? window.innerHeight : 600
+    },
     physics: {
         default: 'arcade',
         arcade: {

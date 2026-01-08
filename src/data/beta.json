@@ -16,6 +16,7 @@
             "hitStun": 15,
             "knockback": { "x": 30, "y": 0 },
             "cancelable": true,
+            "moveControlFactor": 0.85,
             "superGain": 10
         },
         "LIGHT_FORWARD": {
@@ -25,6 +26,7 @@
             "hitStun": 18,
             "knockback": { "x": 70, "y": 0 },
             "cancelable": true,
+            "moveControlFactor": 0.75,
             "superGain": 11
         },
         "LIGHT_DOWN": {
@@ -34,6 +36,7 @@
             "hitStun": 12,
             "knockback": { "x": 20, "y": 0 },
             "cancelable": true,
+            "moveControlFactor": 0.85,
             "superGain": 8
         },
         "LIGHT_UP": {
@@ -43,6 +46,7 @@
             "hitStun": 20,
             "knockback": { "x": 50, "y": -300 },
             "cancelable": true,
+            "moveControlFactor": 0.75,
             "superGain": 12
         },
         "HEAVY_NEUTRAL": {
@@ -52,6 +56,8 @@
             "hitStun": 45,
             "knockback": { "x": 200, "y": 300 },
             "notes": "Spike (hits downwards)",
+            "lockMovement": true,
+            "moveControlFactor": 0.2,
             "superGain": 20
         },
         "HEAVY_FORWARD": {
@@ -60,6 +66,8 @@
             "startup": 16, "active": 5, "recovery": 22,
             "hitStun": 48,
             "knockback": { "x": 280, "y": -150 },
+            "lockMovement": true,
+            "moveControlFactor": 0.3,
             "superGain": 23
         },
         "HEAVY_DOWN": {
@@ -69,6 +77,8 @@
             "hitStun": 40,
             "knockback": { "x": 200, "y": 50 },
             "notes": "Low hit",
+            "lockMovement": true,
+            "moveControlFactor": 0.1,
             "superGain": 19
         },
         "HEAVY_UP": {
@@ -77,6 +87,8 @@
             "startup": 12, "active": 6, "recovery": 20,
             "hitStun": 50,
             "knockback": { "x": 80, "y": -700 },
+            "lockMovement": true,
+            "moveControlFactor": 0.2,
             "superGain": 22
         },
         "SPECIAL_NEUTRAL": {
@@ -86,6 +98,8 @@
             "hitStun": 40,
             "knockback": { "x": 400, "y": -100 },
             "velocity": { "x": 800, "y": 0 },
+            "lockMovement": true,
+            "moveControlFactor": 0.0,
             "superGain": 25
         },
         "SPECIAL_QCB": {
@@ -97,6 +111,8 @@
             "hitStun": 35,
             "knockback": { "x": 150, "y": -600 },
             "velocity": { "x": 600, "y": -600 },
+            "lockMovement": true,
+            "moveControlFactor": 0.0,
             "superGain": 25
         },
         "SUPER_DP_HEAVY": {
@@ -109,7 +125,9 @@
             "startup": 18, "active": 12, "recovery": 25,
             "hitStun": 70,
             "knockback": { "x": 200, "y": -800 },
-            "velocity": { "x": 200, "y": -800 }
+            "velocity": { "x": 200, "y": -800 },
+            "lockMovement": true,
+            "moveControlFactor": 0.0
         }
     }
 }

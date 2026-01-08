@@ -3,14 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <title>Stick Fight Web</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { margin: 0; background: #333; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        canvas { border: 2px solid #fff; }
+        html, body { margin: 0; height: 100%; width: 100%; }
+        body { background: #333; }
+        #game-container { width: 100vw; height: 100vh; overflow: hidden; }
+        canvas { width: 100%; height: 100%; display: block; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 </head>
 <body>
     <div id="game-container"></div>
-    <script type="module" src="./src/main.js"></script>
+    <script>
+      // Runtime error overlay for debugging
+      function showError(msg, stack) {
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.left = '0';
+        overlay.style.top = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.background = 'rgba(0,0,0,0.85)';
+        overlay.style.color = '#f88';
+        overlay.style.fontFamily = 'monospace';
+        overlay.style.padding = '16px';
+        overlay.style.boxSizing = 'border-box';
+        overlay.style.zIndex = '99999';
+        overlay.innerHTML = '<h2 style="color:#fff">Runtime Error</h2><pre style="white-space:pre-wrap;">' + msg + '\n' + (stack || '') + '</pre>';
+        document.body.appendChild(overlay);
+      }
+      window.addEventListener('error', (e) => {
+        console.error(e.error || e.message);
+        showError(e.message || e.error?.message || String(e));
+      });
+      window.addEventListener('unhandledrejection', (e) => {
+        console.error(e.reason);
+        showError(e.reason?.message || String(e.reason), e.reason?.stack || '');
+      });
+    </script>
+    <script>
+      // Use dynamic import so we can catch and display module-load errors reliably
+      (async () => {
+        try {
+          await import('./src/main.js');
+        } catch (err) {
+          console.error('Module load error:', err);
+          showError(err.message || String(err), err.stack || '');
+        }
+      })();
+    </script>
 </body>
 </html>
